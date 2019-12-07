@@ -15,7 +15,7 @@ routes.get('/users/all', (req, res) => UserController.show(req, res));
 
 routes.post('/sessions', SessionController.store);
 routes.post('/mail', MailController.store);
-routes.get('/mail', MailController.showSender);
+routes.post('/mailSender', MailController.showSender);
 routes.use(authMiddleware);
 
 routes.put('/users', UserController.update);
