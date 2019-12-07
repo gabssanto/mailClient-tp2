@@ -81,6 +81,37 @@ class UserController {
     return allUsers;
   }
 
+  async deleteUser(userObj, userID) {
+    const schema = Yup.object().shape({
+      email: Yup.string().email(),
+      password: Yup.string().min(6)
+    });
+
+    if (!(await schema.isValid(userObj))) {
+      return { error: 'Validation fails' };
+    }
+
+    const { email, password } = userObj;
+
+    const user = await User.findByPk(userID);
+
+    if (email !== user.email) {
+      const userExists = await User.findOne({ where: { email } });
+
+      if (userExists) {
+        return { error: 'User exists' };
+      }
+    }
+
+    if (password && !(await user.checkPassword(password))) {
+      return { error: 'Password does not match' };
+    }
+
+    const { id, name, provider } = await user.destroy();
+
+    return { id, name, email, provider };
+  }
+
   /**
    * Request methods
    */
@@ -105,6 +136,15 @@ class UserController {
   async show(req, res) {
     var memama = await this.getUsers()
     return res.json(memama);
+  }
+
+  async delete(req, res) {
+    const answ = await this.deleteUser(req.body, req.params.id);
+    if(answ.hasOwnProperty('error')) {
+      return res.status(400).json(answ);
+    } else {
+      return res.json(answ);
+    }
   }
 }
 

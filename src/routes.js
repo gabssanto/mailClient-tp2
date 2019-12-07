@@ -20,5 +20,6 @@ routes.post('/mailReceiver', MailController.showReceiver);
 routes.use(authMiddleware);
 
 routes.put('/users', (req, res) => UserController.update(req, res));
+routes.delete('/users/:id', (req, res) => UserController.delete(req, res));
 
 export default routes;
