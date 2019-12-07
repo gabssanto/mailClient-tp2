@@ -10,14 +10,15 @@ const routes = new Router();
 
 routes.use(cors())
 
-routes.post('/users', UserController.store);
+routes.post('/users', (req, res) => UserController.store(req, res));
 routes.get('/users/all', (req, res) => UserController.show(req, res));
 
 routes.post('/sessions', SessionController.store);
 routes.post('/mail', MailController.store);
 routes.post('/mailSender', MailController.showSender);
+routes.post('/mailReceiver', MailController.showReceiver);
 routes.use(authMiddleware);
 
-routes.put('/users', UserController.update);
+routes.put('/users', (req, res) => UserController.update(req, res));
 
 export default routes;
