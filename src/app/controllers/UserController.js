@@ -72,6 +72,17 @@ class UserController {
 
     return res.json({ id, name, email, provider });
   }
+
+  async show(req, res) {
+    //const allUsers = await User.findAll();
+    var memama = await this.getUsers()
+    return res.json(memama);
+  }
+
+  async getUsers() {
+    const allUsers = await User.findAll();
+    return allUsers;
+  }
 }
 
 export default new UserController();

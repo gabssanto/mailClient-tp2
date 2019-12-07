@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import nodemailer from "nodemailer";
 import Mail from '../models/Mail';
 import User from '../models/User';
 
@@ -40,7 +41,7 @@ class MailController {
     return res.json({ id, from, to, subject, text, external })
   }
 
-  async showAll(req, res) {
+  async showSender(req, res) {
     const schema = Yup.object().shape({
       from: Yup.string().email().required(),
     });
