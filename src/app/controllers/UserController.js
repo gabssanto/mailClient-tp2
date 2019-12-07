@@ -2,7 +2,10 @@ import * as Yup from 'yup';
 import User from '../models/User';
 
 class UserController {
-  async store(req, res) {
+  /**
+   * Action (testable) methods
+   */
+  async createUser(user) {
     const schema = Yup.object().shape({
       name: Yup.string().required(),
       email: Yup.string()
@@ -13,27 +16,27 @@ class UserController {
         .min(6),
     });
 
-    if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Validation fails' });
+    if (!(await schema.isValid(user))) {
+      return { error: 'Validation fails' };
     }
 
-    const userExists = await User.findOne({ where: { email: req.body.email } });
+    const userExists = await User.findOne({ where: { email: user.email } });
 
     if (userExists) {
-      return res.status(400).json({ error: 'User exists' });
+      return { error: 'User exists' };
     }
 
-    const { id, name, email, provider } = await User.create(req.body);
+    const { id, name, email, provider } = await User.create(user);
 
-    return res.json({
+    return {
       id,
       name,
       email,
       provider,
-    });
+    };
   }
 
-  async update(req, res) {
+  async updateUser(userObj, userID) {
     const schema = Yup.object().shape({
       name: Yup.string(),
       email: Yup.string().email(),
@@ -48,40 +51,60 @@ class UserController {
       ),
     });
 
-    if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Validation fails' });
+    if (!(await schema.isValid(userObj))) {
+      return { error: 'Validation fails' };
     }
 
-    const { email, oldPassword } = req.body;
+    const { email, oldPassword } = userObj;
 
-    const user = await User.findByPk(req.UserId);
+    const user = await User.findByPk(userID);
 
     if (email !== user.email) {
       const userExists = await User.findOne({ where: { email } });
 
       if (userExists) {
-        return res.status(400).json({ error: 'User exists' });
+        return { error: 'User exists' };
       }
     }
 
     if (oldPassword && !(await user.checkPassword(oldPassword))) {
-      res.status(401).json({ error: 'Password does not match' });
+      return { error: 'Password does not match' };
     }
 
-    const { id, name, provider } = await user.update(req.body);
+    const { id, name, provider } = await user.update(userObj);
 
-    return res.json({ id, name, email, provider });
-  }
-
-  async show(req, res) {
-    //const allUsers = await User.findAll();
-    var memama = await this.getUsers()
-    return res.json(memama);
+    return { id, name, email, provider };
   }
 
   async getUsers() {
     const allUsers = await User.findAll();
     return allUsers;
+  }
+
+  /**
+   * Request methods
+   */
+  async store(req, res) {
+    const answ = await this.createUser(req.body);
+    if(answ.hasOwnProperty('error')) {
+      return res.status(400).json(answ);
+    } else {
+      return res.json(answ);
+    }
+  }
+
+  async update(req, res) {
+    const answ = await this.updateUser(req.body, req.UserId);
+    if(answ.hasOwnProperty('error')) {
+      return res.status(400).json(answ);
+    } else {
+      return res.json(answ);
+    }
+  }
+
+  async show(req, res) {
+    var memama = await this.getUsers()
+    return res.json(memama);
   }
 }
 

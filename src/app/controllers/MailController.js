@@ -63,6 +63,28 @@ class MailController {
     return res.json(ret)
   }
 
+  async showReceiver(req, res) {
+    const schema = Yup.object().shape({
+      to: Yup.string().email().required(),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'All fields are required to send' });
+    }
+
+    const emailReceiver = req.body.to;
+
+    const user = await User.findOne({ where: { email: emailReceiver }});
+
+    const ret = await Mail.findAll({
+      where: {
+        to: user.email
+      }
+    });
+
+    return res.json(ret)
+  }
+
 };
 
 export default new MailController();
