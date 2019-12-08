@@ -1,11 +1,12 @@
 const test = require('tape');
 import '../src/database';
 import UserController from '../src/app/controllers/UserController';
+import MailController from '../src/app/controllers/MailController';
 
 /**
  * Testes de Usuario
  * Criacao, atualizacao, login, etc
-  */
+ */
 
 test('Criacao, atualizacao e remocao de usuario', async (t) => {
   const before = await UserController.getUsers().length;
@@ -58,9 +59,70 @@ test('Criacao, atualizacao e remocao de usuario', async (t) => {
   t.assert(update.hasOwnProperty('error') === true, "Nao aceita senha incorreta");
 
   // deleta o usuario
-  await UserController.deleteUser(toTest, added.id);
+  const hasDeleted = await UserController.deleteUser(toUpdate, added.id);
   const after2 = await UserController.getUsers().length;
-  t.assert(before === after2, "Deletou o usuario com sucesso");
+  t.assert(hasDeleted.hasOwnProperty('error') === false, "Sem erros ao deletar");
+  t.assert(before === after2, "Usuario removido");
 
+  t.end();
+});
+
+
+test('Envio de emails', async (t) => {
+  const user1 = {
+    name: "User 1",
+    email: "user1tp2@meuss.com",
+    password: "12345667"
+  };
+
+  const user2 = {
+    name: "User 2",
+    email: "user2tp2@meuss.com",
+    password: "12345667"
+  };
+
+  // cria dois usuarios
+  const u1 = await UserController.createUser(user1);
+  const u2 = await UserController.createUser(user2);
+
+  const mail = {
+    from: u1.email,
+    to: u2.email,
+    subject: "Testing",
+    text: "Hi i'm just testing"
+  }
+
+  // quantidades antes do envio
+  const totalSentU1 = await MailController.getSender({ from: u1.email });
+  const totalRecvU2 = await MailController.getReceiver({ to: u2.email });
+  // enviar email interno
+  const sentMail = await MailController.sendMail(mail);
+  t.assert(sentMail.hasOwnProperty('error') === false, "Sem erros ao enviar");
+  t.assert(sentMail.hasOwnProperty('message') === false, "Destinatario interno");
+  t.assert(mail.from === sentMail.from, "Remetente correto");
+  t.assert(mail.to === sentMail.to, "Destinatario correto");
+  t.assert(mail.subject === sentMail.subject, "Assunto correto");
+  t.assert(mail.text === sentMail.text, "Texto correto");
+
+  // quantidades apos o envio
+  const totalSentAfterU1 = await MailController.getSender({ from: u1.email });
+  const totalSentAfterU2 = await MailController.getReceiver({ to: u2.email });
+  t.assert(totalSentU1.length + 1 == totalSentAfterU1.length, "Quantidade enviados atualizada");
+  t.assert(totalRecvU2.length + 1 == totalSentAfterU2.length, "Quantidade recebidos atualizada");
+
+  const mail2 = {
+    from: u1.email,
+    to: "tp2trab@thebytefrost.com",
+    subject: "Testing",
+    text: "Hi i'm just testing again"
+  }
+
+  // enviar email externo
+  const sentMail2 = await MailController.sendMail(mail2);
+  t.assert(sentMail2.hasOwnProperty('message') === true, "Enviou externamente");
+
+  // remove os usuarios do teste
+  await UserController.deleteUser(user1, u1.id);
+  await UserController.deleteUser(user2, u2.id);
   t.end();
 });
